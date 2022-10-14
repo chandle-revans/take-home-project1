@@ -16,8 +16,19 @@ def lambda_handler(event, context):
     days = event["days"]
     
     logger.info('SSL Check host: %s with %s days cushion',  host, days)
-    exp_bool = is_ssl_cert_expiring(host, days)
-    return { 'status': 200, 'expireWarning': exp_bool }
+    
+    try:
+        is_expiring = is_ssl_cert_expiring(host, days)
+        if is_expiring:
+            return { 'status': 200, 'certExpStatus': 'expiring' }
+        else:
+            return { 'status': 200, 'certExpStatus': 'valid' }
+    except Expired as ex:
+        logger.error('Certificate for host: %s is expired', host)
+        return { 'status': 200, 'certExpStatus': 'expired' }
+    except Exception as ex:
+        logger.error('An error has occurred. Unable to retrieve certificate expiration info for host: %s', host)
+        return { 'status': 500, 'certExpStatus': 'unknown' }
 
 def get_ssl_expire_time(host):
     context = ssl.create_default_context()
