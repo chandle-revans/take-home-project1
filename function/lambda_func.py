@@ -51,7 +51,7 @@ def is_ssl_cert_expiring(host, days):
     if remaining < datetime.timedelta(days=0):
         raise Expired("SSL Cert for host %s expired %s days ago" % (host, remaining.days))
     elif remaining < datetime.timedelta(days=days):
-        logger.warning('Expires in %s days', remaining.days)
+        logger.warning('SSL Cert for host %s expires in %s days', host, remaining.days)
         return True
     else:
         return False
