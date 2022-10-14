@@ -2,6 +2,7 @@ import logging
 import socket
 import ssl
 import datetime
+import json
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -10,23 +11,25 @@ class Expired(Exception):
     pass
 
 def lambda_handler(event, context):
-    host = event["host"]
-    days = event["days"]
+    request_body = json.loads(event["body"])
+    
+    host = request_body["host"]
+    days = request_body["days"]
     
     logger.info('SSL Check host: %s with %s days cushion',  host, days)
     
     try:
         is_expiring = is_ssl_cert_expiring(host, days)
         if is_expiring:
-            return { 'status': 200, 'certExpStatus': 'expiring' }
+            return build_http_response(200, 'expiring')
         else:
-            return { 'status': 200, 'certExpStatus': 'valid' }
+            return build_http_response(200, 'valid')
     except Expired as ex:
         logger.error('Certificate for host: %s is expired', host)
-        return { 'status': 200, 'certExpStatus': 'expired' }
+        return build_http_response(200, 'expired')
     except Exception as ex:
         logger.exception('An error has occurred. Unable to retrieve certificate expiration info for host: %s', host)
-        return { 'status': 500, 'certExpStatus': 'unknown' }
+        return build_http_response(500, 'unknown')
 
 def get_ssl_expire_time(host):
     context = ssl.create_default_context()
@@ -53,3 +56,14 @@ def is_ssl_cert_expiring(host, days):
         return True
     else:
         return False
+
+def build_http_response(statusCode, expStatus):
+    expStatusBody = {
+        'expStatus': expStatus
+    }
+
+    return {
+        'statusCode': statusCode,
+        'headers': { 'Content-Type': 'application/json' },
+        'body': json.dumps(expStatusBody)
+    }
