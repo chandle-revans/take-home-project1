@@ -27,7 +27,7 @@ def lambda_handler(event, context):
         logger.error('Certificate for host: %s is expired', host)
         return { 'status': 200, 'certExpStatus': 'expired' }
     except Exception as ex:
-        logger.error('An error has occurred. Unable to retrieve certificate expiration info for host: %s', host)
+        logger.exception('An error has occurred. Unable to retrieve certificate expiration info for host: %s', host)
         return { 'status': 500, 'certExpStatus': 'unknown' }
 
 def get_ssl_expire_time(host):
