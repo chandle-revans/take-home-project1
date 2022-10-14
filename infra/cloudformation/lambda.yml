@@ -1,0 +1,4 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Provision a python Lambda function
+
+Resources:
